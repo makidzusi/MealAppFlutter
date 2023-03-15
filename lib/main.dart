@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:meal_app/data.dart';
+import 'package:meal_app/models/meal.dart';
 import 'package:meal_app/screens/category_meals_screen.dart';
 import 'package:meal_app/screens/category_screen.dart';
 import 'package:meal_app/screens/filters_screen.dart';
@@ -9,8 +11,44 @@ void main() {
   runApp(MealApp());
 }
 
-class MealApp extends StatelessWidget {
+class MealApp extends StatefulWidget {
   const MealApp({super.key});
+
+  @override
+  State<MealApp> createState() => _MealAppState();
+}
+
+class _MealAppState extends State<MealApp> {
+  Map<String, bool> _filters = {
+    'gluten': true,
+    'lactose': false,
+    'vegan': false,
+    'vegetarian': false
+  };
+
+  List<Meal> _availableMeals = DUMMY_MEALS;
+
+  void _setFilters(Map<String, bool> filterData) {
+    setState(() {
+      _filters = filterData;
+
+      _availableMeals = DUMMY_MEALS.where((meal) {
+        if (_filters['gluten']! && !meal.isGlutenFree) {
+          return false;
+        }
+        if (_filters['lactose']! && !meal.isLactoseFree) {
+          return false;
+        }
+        if (_filters['vegetarian']! && !meal.isVegetarian) {
+          return false;
+        }
+        if (_filters['vegan']! && !meal.isVegan) {
+          return false;
+        }
+        return true;
+      }).toList();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,8 +57,13 @@ class MealApp extends StatelessWidget {
         title: 'Meal app',
         routes: {
           '/': (ctx) => const TabsScreen(),
-          FiltersScreen.routeName: (ctx) => const FiltersScreen(),
-          CategoryMealsScreen.routeName: (ctx) => const CategoryMealsScreen(),
+          FiltersScreen.routeName: (ctx) => FiltersScreen(
+                currentFilters: _filters,
+                saveFilters: _setFilters,
+              ),
+          CategoryMealsScreen.routeName: (ctx) => CategoryMealsScreen(
+                availableMeals: _availableMeals,
+              ),
           MealDetailScreen.routerName: (ctx) => const MealDetailScreen()
         },
         onUnknownRoute: (settings) {
